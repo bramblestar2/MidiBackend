@@ -18,6 +18,8 @@ private:
 
     RtMidiIn _midiin;
     RtMidiOut _midiout;
+
+    std::vector<std::unique_ptr<MidiDevice::PortPair>> _activeValidationPorts;
 public:
     MidiManager();
     ~MidiManager();
