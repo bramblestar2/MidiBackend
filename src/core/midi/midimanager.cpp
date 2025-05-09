@@ -1,14 +1,103 @@
 #include "midimanager.h"
+#include <cctype>
+#include <regex>
+#include <spdlog/spdlog.h>
+#include <regex>
+#include <algorithm>
+#include <string>
+#include <unistd.h>
 
-MidiManager::MidiManager() {}
+MidiManager::MidiManager() {
 
-std::vector<MidiDevice::PortPair> MidiManager::getPortPairs() { return m_ports; }
-
-bool MidiManager::verifyIdentity(unsigned int inPort,
-                                 const std::vector<unsigned char>& targetId) {
-    std::vector<unsigned char> id;
-    // m_ports[inPort].portIn->getPortName(id);
-    return id == targetId;
 }
 
-void MidiManager::refresh() { m_availableDevices = getPortPairs(); }
+
+MidiManager::~MidiManager() {
+    
+}
+
+
+void MidiManager::identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData) {
+
+}
+
+
+bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
+                                 const std::vector<unsigned char>& targetId) 
+{
+    // try {
+    //     RtMidiIn midiIn;
+    //     RtMidiOut midiOut;
+        
+    //     midiIn.openPort(inPort);
+    //     midiOut.openPort(outPort);
+
+    //     midiIn.ignoreTypes(false, true, true);
+    //     midiIn.setCallback([](double deltaTime, std::vector<unsigned char> *message, void *userData) -> void {
+    //         auto* self = static_cast<MidiManager*>(userData);
+            
+    //         for (int i = 0; i < self->m_ports.size(); i++) {
+    //             std::cout << self->m_ports.at(i).first << " - " << self->m_ports.at(i).second << '\n';
+    //         }
+
+
+    //         for (int i = 0; i < message->size(); i++) {
+    //             std::cout << (int)message->at(i) << " ";
+    //         }
+
+    //         std::cout << "\n";
+    //     }, this);
+    //     // SysEx: Identity Request
+    //     std::vector<unsigned char> sysex = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
+        
+    //     midiOut.sendMessage(&sysex);
+        
+    //     sleep(2);
+    //     midiIn.cancelCallback();
+    //     midiIn.closePort();
+    //     midiOut.closePort();
+    // } catch (RtMidiError &error) {
+    //     error.printMessage();
+    // }
+
+
+    return false;
+}
+
+
+bool MidiManager::portsMatch(std::string in, std::string out) {
+    // Go to Uppercase
+    std::transform(in.begin(), in.end(), in.begin(), ::toupper);
+    std::transform(out.begin(), out.end(), out.begin(), ::toupper);
+    
+    // Remove IN AND OUT from the names
+    in = std::regex_replace(in, std::regex("IN"), "");
+    out = std::regex_replace(out, std::regex("OUT"), "");
+
+    return in == out;
+}
+
+
+void MidiManager::refresh() { 
+    spdlog::info("MidiManager: Refreshing Midi Devices");
+
+    int inPortCount = _midiin.getPortCount();
+    int outPortCount = _midiout.getPortCount();
+
+    for (int i = 0; i < inPortCount; i++) {
+        std::string inPortName = _midiin.getPortName(i);
+
+        for (int j = 0; j < outPortCount; j++) {
+            std::string outPortName = _midiout.getPortName(j);
+
+            if (this->portsMatch(inPortName, outPortName)) {
+                m_ports.push_back({i, j});
+
+                spdlog::info("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ")");
+                if (this->verifyIdentity(i, j, {})) {
+                    std::cout << "IDENTITY VERIFIED\n";
+                }
+            }
+        }
+    }
+}

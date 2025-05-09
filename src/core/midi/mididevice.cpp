@@ -1,5 +1,7 @@
 #include "mididevice.h"
 
-MidiDevice::MidiDevice() {}
-
-std::vector<unsigned char> MidiDevice::identity() { return {}; }
+MidiDevice::MidiDevice(std::string deviceName, std::vector<unsigned char> identity)
+    : m_identity(identity)
+    , m_name(deviceName)
+{
+}

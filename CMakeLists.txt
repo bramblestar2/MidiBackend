@@ -8,6 +8,7 @@ project(
 
 find_package(RtMidi CONFIG REQUIRED)
 find_package(RtAudio CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 add_executable(MidiTest 
     src/main.cpp
@@ -16,5 +17,4 @@ add_executable(MidiTest
     src/core/midi/midimanager.cpp
 )
 
-target_link_libraries(MidiTest PRIVATE RtMidi::rtmidi)
-target_link_libraries(MidiTest PRIVATE RtAudio::rtaudio)
+target_link_libraries(MidiTest PRIVATE RtMidi::rtmidi RtAudio::rtaudio spdlog::spdlog)
