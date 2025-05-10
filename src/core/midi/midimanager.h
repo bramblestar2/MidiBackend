@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <vector>
 #include <rtmidi/RtMidi.h>
 #include <memory>
@@ -7,19 +8,30 @@
 class MidiManager {
 private:
 
+    struct ValidationSession {
+        std::shared_ptr<RtMidiIn> midiIn;
+        std::shared_ptr<RtMidiOut> midiOut;
+        std::vector<unsigned char> targetId;
+        std::chrono::steady_clock::time_point startTime;
+        unsigned int inPort;
+        unsigned int outPort;
+    };
+
     std::vector<std::pair<int, int>> m_ports;
     std::vector<std::shared_ptr<MidiDevice>> m_availableDevices;
+    std::vector<std::unique_ptr<ValidationSession>> m_validationSessions;
     
     bool portsMatch(std::string in, std::string out);
     bool verifyIdentity(unsigned int inPort, unsigned int outPort,
         const std::vector<unsigned char>& targetId);
     
-    void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
+    static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
+    void handleIdentityResponse(ValidationSession* session, std::vector<unsigned char> *message);
+    void cleanupSession(ValidationSession* session);
+    void checkTimeouts();
 
     RtMidiIn _midiin;
     RtMidiOut _midiout;
-
-    std::vector<std::unique_ptr<MidiDevice::PortPair>> _activeValidationPorts;
 public:
     MidiManager();
     ~MidiManager();

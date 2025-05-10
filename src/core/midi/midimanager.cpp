@@ -27,19 +27,22 @@ bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
     try {
         RtMidiIn* midiIn = new RtMidiIn;
         RtMidiOut* midiOut = new RtMidiOut;
-        this->_activeValidationPorts.push_back(std::make_unique<MidiDevice::PortPair>(midiIn, midiOut));
-        
         
         midiIn->openPort(inPort);
         midiOut->openPort(outPort);
 
         midiIn->ignoreTypes(false, true, true);
+
+        std::pair<MidiManager*, int> callbackData(this, inPort);
+
         midiIn->setCallback([](double deltaTime, std::vector<unsigned char> *message, void *userData) -> void {
-            auto* self = static_cast<MidiManager*>(userData);
+            auto* self = static_cast<std::pair<MidiManager*, int>*>(userData);
             
-            for (int i = 0; i < self->m_ports.size(); i++) {
-                std::cout << self->m_ports.at(i).first << " - " << self->m_ports.at(i).second << '\n';
-            }
+            // for (int i = 0; i < self->m_ports.size(); i++) {
+            //     std::cout << self->m_ports.at(i).first << " - " << self->m_ports.at(i).second << '\n';
+            // }
+
+            std::cout << "IN: " << self->second << "\n";
 
 
             for (int i = 0; i < message->size(); i++) {
@@ -47,15 +50,17 @@ bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
             }
 
             std::cout << "\n";
-        }, this);
+        }, &callbackData);
         // SysEx: Identity Request
         std::vector<unsigned char> sysex = { 0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7 };
         
         midiOut->sendMessage(&sysex);
-        
+
         midiIn->cancelCallback();
         midiIn->closePort();
         midiOut->closePort();
+        delete midiIn;
+        delete midiOut;
     } catch (RtMidiError &error) {
         error.printMessage();
     }
