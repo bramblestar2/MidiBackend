@@ -20,6 +20,12 @@ MidiManager::MidiManager() = default;
 
 
 MidiManager::~MidiManager() {
+    for (auto& session : m_activeSessions) {
+        session->midiIn->cancelCallback();
+        session->midiIn->closePort();
+        session->midiOut->closePort();
+    }
+
     m_activeSessions.clear();
 
     if (_midiin.isPortOpen()) _midiin.closePort();
@@ -32,8 +38,14 @@ void MidiManager::identityCallback(double deltaTime, std::vector<unsigned char> 
 
     if (session && message && !message->empty()) {
         std::cout << "OUT: " << session->outPort << "\n";
-        session->manager->cleanupSession(session);
         std::cout << "Callback\n";
+
+        for (auto m : *message) {
+            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
+        }
+        std::cout << "\n";
+
+        session->manager->cleanupSession(session);
     }
 }
 
@@ -59,9 +71,10 @@ bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
         session->midiOut = std::make_shared<RtMidiOut>();
         session->manager = this;
 
+        session->midiIn->setCallback(identityCallback, session.get());
+        session->midiIn->ignoreTypes(false, true, true);
         session->midiIn->openPort(inPort);
         session->midiOut->openPort(outPort);
-        session->midiIn->setCallback(identityCallback, session.get());
         session->startTime = std::chrono::steady_clock::now();
 
         std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
@@ -108,6 +121,10 @@ bool MidiManager::portsMatch(std::string in, std::string out) {
     std::transform(in.begin(), in.end(), in.begin(), ::toupper);
     std::transform(out.begin(), out.end(), out.begin(), ::toupper);
     
+    //Remove index number at the end
+    in = std::regex_replace(in, std::regex("\\d+$"), "");
+    out = std::regex_replace(out, std::regex("\\d+$"), "");
+
     // Remove IN AND OUT from the names
     in = std::regex_replace(in, std::regex("IN"), "");
     out = std::regex_replace(out, std::regex("OUT"), "");
@@ -132,50 +149,50 @@ void MidiManager::refresh() {
             std::string outPortName = _midiout.getPortName(j);
 
             if (this->portsMatch(inPortName, outPortName)) {
-                RtMidiIn in;
-                RtMidiOut out;
-                in.setErrorCallback([](RtMidiError::Type type, const std::string &msg, void *data) {
-                    std::cout << msg << "\n";
-                });
-                in.setCallback([](double deltaTime, std::vector<unsigned char> *message, void *userData) {
-                    for (auto m : *message) {
-                        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
-                    }
-                    std::cout << "\n";
-                });
+                // RtMidiIn in;
+                // RtMidiOut out;
+                // in.setErrorCallback([](RtMidiError::Type type, const std::string &msg, void *data) {
+                //     std::cout << msg << "\n";
+                // });
+                // in.setCallback([](double deltaTime, std::vector<unsigned char> *message, void *userData) {
+                //     for (auto m : *message) {
+                //         std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
+                //     }
+                //     std::cout << "\n";
+                // });
 
-                in.openPort(i);
-                out.openPort(j);
+                // in.openPort(i);
+                // out.openPort(j);
 
 
-                std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
-                std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
-                out.sendMessage(&sysex);
+                // std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
+                // std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
+                // out.sendMessage(&sysex);
 
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                in.closePort();
-                out.closePort();
+                // std::this_thread::sleep_for(std::chrono::seconds(1));
+                // in.closePort();
+                // out.closePort();
 
                 
-                in.openPort(i);
-                out.openPort(j);
+                // in.openPort(i);
+                // out.openPort(j);
 
 
-                std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
-                out.sendMessage(&sysex);
+                // std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
+                // out.sendMessage(&sysex);
 
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                in.closePort();
-                out.closePort();
+                // std::this_thread::sleep_for(std::chrono::seconds(1));
+                // in.closePort();
+                // out.closePort();
                 
 
 
+                std::cout << inPortName << " " << outPortName << "\n";
+                m_ports.push_back({i, j});
 
-                // m_ports.push_back({i, j});
-
-                // spdlog::debug("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ")");
-                // if (this->verifyIdentity(i, j, {})) {
-                // }
+                spdlog::info("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ")");
+                if (this->verifyIdentity(i, j, {})) {
+                }
             }
         }
     }

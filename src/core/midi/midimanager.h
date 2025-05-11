@@ -9,6 +9,12 @@ class MidiManager {
 private:
 
     struct ValidationSession {
+        ~ValidationSession() { 
+            midiIn->cancelCallback(); 
+            midiIn->closePort(); 
+            midiOut->closePort(); 
+        }
+
         std::shared_ptr<RtMidiIn> midiIn;
         std::shared_ptr<RtMidiOut> midiOut;
         std::vector<unsigned char> targetId;
