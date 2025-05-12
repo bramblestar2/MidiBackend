@@ -46,7 +46,7 @@ private:
     std::vector<std::pair<int, int>> m_ports;
     std::vector<std::shared_ptr<MidiDevice>> m_availableDevices;
     std::vector<std::unique_ptr<ValidationSession>> m_activeSessions;
-    
+
     bool portsMatch(std::string in, std::string out);
     bool verifyIdentity(unsigned int inPort, unsigned int outPort,
         const std::vector<unsigned char>& targetId);

@@ -34,6 +34,9 @@ private:
     std::unique_ptr<RtMidiIn> m_portIn;
     std::unique_ptr<RtMidiOut> m_portOut;
 
+    int m_inPort;
+    int m_outPort;
+
     void attemptVerify();
 
     static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
@@ -46,6 +49,7 @@ public:
     MidiDevice(const int& inPort, const int& outPort);
     ~MidiDevice(); // Clean midi ports
 
+    void verify();
     void open(const int& inPort, const int& outPort);
     void close();
     const bool& is_available() const { return m_available; }

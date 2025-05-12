@@ -1,4 +1,5 @@
 #include "midimanager.h"
+#include "mididevice.h"
 #include <cctype>
 #include <chrono>
 #include <regex>
@@ -28,6 +29,8 @@ MidiManager::~MidiManager() {
     }
 
     m_activeSessions.clear();
+
+    m_availableDevices.clear();
 
     if (_midiin.isPortOpen()) _midiin.closePort();
     if (_midiout.isPortOpen()) _midiout.closePort();
@@ -63,35 +66,39 @@ bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
                                  const std::vector<unsigned char>& targetId) 
 {
     try {
-        auto it = std::find_if(m_activeSessions.begin(), m_activeSessions.end(), [inPort, outPort](const auto& session) {
-            return session->inPort == inPort && session->outPort == outPort;
-        });
-        if (it != m_activeSessions.end()) {
-            spdlog::warn("Verification already in progress for ports {} and {}", inPort, outPort);
-            return false;
-        }
+        std::shared_ptr<MidiDevice> device = std::make_shared<MidiDevice>(inPort, outPort);
+
+        m_availableDevices.push_back(device);
+
+        // auto it = std::find_if(m_activeSessions.begin(), m_activeSessions.end(), [inPort, outPort](const auto& session) {
+        //     return session->inPort == inPort && session->outPort == outPort;
+        // });
+        // if (it != m_activeSessions.end()) {
+        //     spdlog::warn("Verification already in progress for ports {} and {}", inPort, outPort);
+        //     return false;
+        // }
 
 
-        auto session = std::make_unique<ValidationSession>();
-        session->inPort = inPort;
-        session->outPort = outPort;
-        session->targetId = targetId;
-        session->midiIn = std::make_shared<RtMidiIn>();
-        session->midiOut = std::make_shared<RtMidiOut>();
-        session->manager = this;
+        // auto session = std::make_unique<ValidationSession>();
+        // session->inPort = inPort;
+        // session->outPort = outPort;
+        // session->targetId = targetId;
+        // session->midiIn = std::make_shared<RtMidiIn>();
+        // session->midiOut = std::make_shared<RtMidiOut>();
+        // session->manager = this;
 
-        session->midiIn->setCallback(identityCallback, session.get());
-        session->midiIn->ignoreTypes(false, true, true);
-        session->midiIn->openPort(inPort);
-        session->midiOut->openPort(outPort);
-        session->startTime = std::chrono::steady_clock::now();
+        // session->midiIn->setCallback(identityCallback, session.get());
+        // session->midiIn->ignoreTypes(false, true, true);
+        // session->midiIn->openPort(inPort);
+        // session->midiOut->openPort(outPort);
+        // session->startTime = std::chrono::steady_clock::now();
 
-        std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
-        session->midiOut->sendMessage(&sysex);
+        // std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
+        // session->midiOut->sendMessage(&sysex);
 
-        m_activeSessions.push_back(std::move(session));
+        // m_activeSessions.push_back(std::move(session));
 
-        std::cout << "Verifying Identity\n";
+        // std::cout << "Verifying Identity\n";
         return true;
     } catch (RtMidiError &error) {
         error.printMessage();
@@ -158,44 +165,6 @@ void MidiManager::refresh() {
             std::string outPortName = _midiout.getPortName(j);
 
             if (this->portsMatch(inPortName, outPortName)) {
-                // RtMidiIn in;
-                // RtMidiOut out;
-                // in.setErrorCallback([](RtMidiError::Type type, const std::string &msg, void *data) {
-                //     std::cout << msg << "\n";
-                // });
-                // in.setCallback([](double deltaTime, std::vector<unsigned char> *message, void *userData) {
-                //     for (auto m : *message) {
-                //         std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
-                //     }
-                //     std::cout << "\n";
-                // });
-
-                // in.openPort(i);
-                // out.openPort(j);
-
-
-                // std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
-                // std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
-                // out.sendMessage(&sysex);
-
-                // std::this_thread::sleep_for(std::chrono::seconds(1));
-                // in.closePort();
-                // out.closePort();
-
-                
-                // in.openPort(i);
-                // out.openPort(j);
-
-
-                // std::cout << in.isPortOpen() << " " << out.isPortOpen() << "\n";
-                // out.sendMessage(&sysex);
-
-                // std::this_thread::sleep_for(std::chrono::seconds(1));
-                // in.closePort();
-                // out.closePort();
-                
-
-
                 std::cout << inPortName << " " << outPortName << "\n";
                 m_ports.push_back({i, j});
 
