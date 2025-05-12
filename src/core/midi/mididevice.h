@@ -46,6 +46,8 @@ public:
     MidiDevice(const int& inPort, const int& outPort);
     ~MidiDevice(); // Clean midi ports
 
+    void open(const int& inPort, const int& outPort);
+    void close();
     const bool& is_available() const { return m_available; }
     const std::vector<unsigned char>& identity() const { return m_identity; }
     const std::string& name() const { return m_name; }

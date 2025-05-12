@@ -1,17 +1,45 @@
 #include "mididevice.h"
+#include <rtmidi/RtMidi.h>
 
-MidiDevice::MidiDevice(const int& inPort, const int& outPort)
-{
+MidiDevice::MidiDevice(const int& inPort, const int& outPort) {
+    this->open(inPort, outPort);
 }
 
 
 MidiDevice::~MidiDevice() {
-    if (m_portIn) if (m_portIn->isPortOpen()) {
-        m_portIn->cancelCallback();
-        m_portIn->closePort();
-        m_portOut->closePort();
-        m_portIn.reset();
-        m_portOut.reset();
+    this->close();
+}
+
+
+void MidiDevice::open(const int& inPort, const int& outPort) {
+    try {
+        this->close();
+
+        m_portIn.reset(new RtMidiIn);
+        m_portOut.reset(new RtMidiOut);
+
+        m_portIn->openPort(inPort);
+        m_portOut->openPort(outPort);
+    } catch (RtMidiError &error) {
+        error.printMessage();
+    }
+}
+
+
+void MidiDevice::close() {
+    try {
+        if (m_portIn) if (m_portIn->isPortOpen()) {
+            m_portIn->cancelCallback();
+            m_portIn->closePort();
+            m_portIn.reset();
+        }
+
+        if (m_portOut) if (m_portOut->isPortOpen()) {
+            m_portOut->closePort();
+            m_portOut.reset();
+        }
+    } catch (RtMidiError &error) {
+        error.printMessage();
     }
 }
 
