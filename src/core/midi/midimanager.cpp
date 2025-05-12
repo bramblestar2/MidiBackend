@@ -69,36 +69,7 @@ bool MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
         std::shared_ptr<MidiDevice> device = std::make_shared<MidiDevice>(inPort, outPort);
 
         m_availableDevices.push_back(device);
-
-        // auto it = std::find_if(m_activeSessions.begin(), m_activeSessions.end(), [inPort, outPort](const auto& session) {
-        //     return session->inPort == inPort && session->outPort == outPort;
-        // });
-        // if (it != m_activeSessions.end()) {
-        //     spdlog::warn("Verification already in progress for ports {} and {}", inPort, outPort);
-        //     return false;
-        // }
-
-
-        // auto session = std::make_unique<ValidationSession>();
-        // session->inPort = inPort;
-        // session->outPort = outPort;
-        // session->targetId = targetId;
-        // session->midiIn = std::make_shared<RtMidiIn>();
-        // session->midiOut = std::make_shared<RtMidiOut>();
-        // session->manager = this;
-
-        // session->midiIn->setCallback(identityCallback, session.get());
-        // session->midiIn->ignoreTypes(false, true, true);
-        // session->midiIn->openPort(inPort);
-        // session->midiOut->openPort(outPort);
-        // session->startTime = std::chrono::steady_clock::now();
-
-        // std::vector<unsigned char> sysex = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
-        // session->midiOut->sendMessage(&sysex);
-
-        // m_activeSessions.push_back(std::move(session));
-
-        // std::cout << "Verifying Identity\n";
+        
         return true;
     } catch (RtMidiError &error) {
         error.printMessage();
