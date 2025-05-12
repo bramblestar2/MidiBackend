@@ -1,22 +1,23 @@
 #include "midimanager.h"
 #include <cctype>
-#include <thread>
 #include <chrono>
 #include <regex>
 #include <rtmidi/RtMidi.h>
 #include <spdlog/spdlog.h>
 #include <regex>
 #include <algorithm>
-#include <string>
 #include <iomanip>
 #include <iostream>
+#include <vector>
 
 
 namespace {
     constexpr int VERIFICATION_TIMEOUT = 2;
 }
 
-MidiManager::MidiManager() = default;
+MidiManager::MidiManager() {
+    populateDeviceMap();
+}
 
 
 MidiManager::~MidiManager() {
@@ -37,16 +38,24 @@ void MidiManager::identityCallback(double deltaTime, std::vector<unsigned char> 
     auto* session = static_cast<ValidationSession*>(userData);
 
     if (session && message && !message->empty()) {
-        std::cout << "OUT: " << session->outPort << "\n";
-        std::cout << "Callback\n";
 
-        for (auto m : *message) {
-            std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
-        }
-        std::cout << "\n";
+        session->manager->handleIdentityResponse(session, message);
 
         session->manager->cleanupSession(session);
     }
+}
+
+
+void MidiManager::handleIdentityResponse(ValidationSession* session, std::vector<unsigned char> *message) {
+    for (auto m : *message) {
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << (int)m << " ";
+    }
+    std::cout << "\n";
+
+    // The midi response given from the identity header
+    //             ** --------
+    // f0 7e 00 06 02 00 20 29 51 00 00 00 00 63 66 79 f7
+
 }
 
 
@@ -195,5 +204,18 @@ void MidiManager::refresh() {
                 }
             }
         }
+    }
+}
+
+
+
+
+
+void MidiManager::populateDeviceMap() {
+    for(const auto& [name, id] : MidiDeviceDB::KNOWN_DEVICES) {
+        std::vector<unsigned char> key;
+        key.insert(key.end(), id.manufacturerId.begin(), id.manufacturerId.end());
+        key.insert(key.end(), id.deviceCode.begin(), id.deviceCode.end());
+        m_deviceMap[key] = name;
     }
 }

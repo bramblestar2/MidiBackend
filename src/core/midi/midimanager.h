@@ -2,8 +2,27 @@
 #include <chrono>
 #include <vector>
 #include <rtmidi/RtMidi.h>
-#include <memory>
+
 #include "mididevice.h"
+
+#include <unordered_map>
+#include <memory>
+#include <string> 
+
+
+namespace std {
+    template<>
+    struct hash<std::vector<unsigned char>> {
+        std::size_t operator()(const std::vector<unsigned char> &v) const noexcept {
+            size_t h = 0;
+            for (auto byte : v) {
+                h = h * 31 + byte;
+            }
+            return h;
+        }
+    };
+}
+
 
 class MidiManager {
 private:
@@ -35,6 +54,10 @@ private:
     static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
     void handleIdentityResponse(ValidationSession* session, std::vector<unsigned char> *message);
     void cleanupSession(ValidationSession* session);
+
+
+    std::unordered_map<std::vector<unsigned char>, std::string> m_deviceMap;
+    void populateDeviceMap();
 
     RtMidiIn _midiin;
     RtMidiOut _midiout;

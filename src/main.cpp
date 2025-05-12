@@ -18,8 +18,8 @@ int main() {
             midiManager.checkTimeouts();
             attempts++;
 
-            if (midiManager.getAvailableDevices().empty()) {
-                std::cout << "No midi devices\n";
+            if (!midiManager.getAvailableDevices().empty()) {
+                std::cout << "There are available devices: " << midiManager.getAvailableDevices().size() << "\n";
             }
             
             std::this_thread::sleep_for(std::chrono::seconds(1));
