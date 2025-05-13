@@ -5,25 +5,41 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <atomic>
+#include <mutex>
+#include <functional>
+
+#include "midimessage.h"
 
 
 class MidiDevice {
+public:
+    enum Availability {
+        UNAVAILABLE = 0x00,
+        VERIFYING = 0x01,
+        AVAILABLE = 0x02
+    };
+
 private:
     std::vector<unsigned char> m_identity;
     std::string m_name;
 
-    bool m_available = false;
+    std::atomic<Availability> m_available = Availability::UNAVAILABLE;
 
-    std::unique_ptr<RtMidiIn> m_portIn;
-    std::unique_ptr<RtMidiOut> m_portOut;
+    std::unique_ptr<RtMidiIn> m_midiIn;
+    std::unique_ptr<RtMidiOut> m_midiOut;
 
     int m_inPort;
     int m_outPort;
 
+    std::unique_ptr<std::function<void(MidiMessage message)>> m_buttonCallback;
+
     void attemptVerify();
 
     static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
+    static void midiCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
     void handleIdentityResponse(std::vector<unsigned char> *message);
+    void handleButtonResponse(std::vector<unsigned char> *message);
 
 public:
     // Upon creation of midi device, it will attempt to verify the 
@@ -35,9 +51,11 @@ public:
     void verify();
     void open(const int& inPort, const int& outPort);
     void close();
-    const bool& is_available() const { return m_available; }
+    const Availability is_available() const noexcept { return m_available; }
     const std::vector<unsigned char>& identity() const { return m_identity; }
     const std::string& name() const { return m_name; }
+
+    std::mutex m_mutex;
 };
 
 

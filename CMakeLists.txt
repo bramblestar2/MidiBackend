@@ -15,6 +15,7 @@ add_executable(MidiTest
 
     src/core/midi/mididevice.cpp
     src/core/midi/midimanager.cpp
+    src/core/midi/midimessage.cpp
 )
 
 target_link_libraries(MidiTest PRIVATE RtMidi::rtmidi RtAudio::rtaudio spdlog::spdlog)

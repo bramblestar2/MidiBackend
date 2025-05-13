@@ -5,7 +5,6 @@
 
 #include "mididevice.h"
 
-#include <unordered_map>
 #include <memory>
 #include <string> 
 
@@ -44,20 +43,11 @@ private:
     };
 
     std::vector<std::pair<int, int>> m_ports;
-    std::vector<std::shared_ptr<MidiDevice>> m_availableDevices;
-    std::vector<std::unique_ptr<ValidationSession>> m_activeSessions;
+    std::vector<std::shared_ptr<MidiDevice>> m_devices;
 
     bool portsMatch(std::string in, std::string out);
     bool verifyIdentity(unsigned int inPort, unsigned int outPort,
         const std::vector<unsigned char>& targetId);
-    
-    static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
-    void handleIdentityResponse(ValidationSession* session, std::vector<unsigned char> *message);
-    void cleanupSession(ValidationSession* session);
-
-
-    std::unordered_map<std::vector<unsigned char>, std::string> m_deviceMap;
-    void populateDeviceMap();
 
     RtMidiIn _midiin;
     RtMidiOut _midiout;
@@ -66,8 +56,7 @@ public:
     ~MidiManager();
     
     void refresh();
-    void checkTimeouts();
 
     std::vector<std::pair<int, int>> getPortPairs() const { return m_ports; }
-    const std::vector<std::shared_ptr<MidiDevice>>& getAvailableDevices() const { return m_availableDevices; }
+    const std::vector<std::shared_ptr<MidiDevice>>& getAvailableDevices() const { return m_devices; }
 };

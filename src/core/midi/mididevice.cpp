@@ -1,4 +1,5 @@
 #include "mididevice.h"
+#include "midimessage.h"
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
@@ -22,8 +23,10 @@ MidiDevice::~MidiDevice() {
 
 
 void MidiDevice::verify() {
+    m_available = Availability::VERIFYING;
+
     std::vector<unsigned char> sysex_identity_request = {0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7};
-    m_portOut->sendMessage(&sysex_identity_request);
+    m_midiOut->sendMessage(&sysex_identity_request);
 }
 
 
@@ -31,15 +34,15 @@ void MidiDevice::open(const int& inPort, const int& outPort) {
     try {
         this->close();
 
-        m_portIn.reset(new RtMidiIn);
-        m_portOut.reset(new RtMidiOut);
+        m_midiIn.reset(new RtMidiIn);
+        m_midiOut.reset(new RtMidiOut);
 
-        m_portIn->setCallback(MidiDevice::identityCallback, this);
+        m_midiIn->setCallback(MidiDevice::identityCallback, this);
 
-        m_portIn->ignoreTypes(false, true, true);
+        m_midiIn->ignoreTypes(false, true, true);
 
-        m_portIn->openPort(inPort);
-        m_portOut->openPort(outPort);
+        m_midiIn->openPort(inPort);
+        m_midiOut->openPort(outPort);
 
         m_inPort = inPort;
         m_outPort = outPort;
@@ -51,15 +54,15 @@ void MidiDevice::open(const int& inPort, const int& outPort) {
 
 void MidiDevice::close() {
     try {
-        if (m_portIn) if (m_portIn->isPortOpen()) {
-            m_portIn->cancelCallback();
-            m_portIn->closePort();
-            m_portIn.reset();
+        if (m_midiIn) if (m_midiIn->isPortOpen()) {
+            m_midiIn->cancelCallback();
+            m_midiIn->closePort();
+            m_midiIn.reset();
         }
 
-        if (m_portOut) if (m_portOut->isPortOpen()) {
-            m_portOut->closePort();
-            m_portOut.reset();
+        if (m_midiOut) if (m_midiOut->isPortOpen()) {
+            m_midiOut->closePort();
+            m_midiOut.reset();
         }
 
         m_inPort = -1;
@@ -71,14 +74,21 @@ void MidiDevice::close() {
 
 
 void MidiDevice::identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData) {
+    auto device = static_cast<MidiDevice*>(userData);
+
     if (message->size() < 6 ||
         (*message)[0] != 0xF0 ||
         (*message)[1] != 0x7E ||
         (*message)[3] != 0x06 ||
-        (*message)[4] != 0x02) return;
+        (*message)[4] != 0x02) {
+        device->m_available = Availability::UNAVAILABLE;
+        return;
+    }
     
-
-    auto device = static_cast<MidiDevice*>(userData);
+    {
+        std::lock_guard<std::mutex> lock(device->m_mutex);
+        device->m_identity = *message;
+    }
 
     device->handleIdentityResponse(message);
 }
@@ -137,8 +147,48 @@ void MidiDevice::handleIdentityResponse(std::vector<unsigned char> *message) {
             dev.begin()
         );
 
-        devOk 
-            ? spdlog::debug("Device matches: " + deviceName) 
-            : spdlog::warn(deviceName + ": device code mismatch");
+        if (devOk) {
+            this->m_available = Availability::AVAILABLE;
+            spdlog::debug("Device matches: " + deviceName);
+
+            m_midiIn->cancelCallback();
+            m_midiIn->setCallback(MidiDevice::midiCallback, this);
+
+            break;
+        } else {
+            this->m_available = Availability::UNAVAILABLE;
+            spdlog::warn(deviceName + ": device code mismatch");
+        }
+    }
+}
+
+
+void MidiDevice::midiCallback(double deltaTime, std::vector<unsigned char> *message, void *userData) {
+    if (message->size() != 3) {
+        return;
+    }
+
+    auto device = static_cast<MidiDevice*>(userData);
+    device->handleButtonResponse(message);
+}
+
+
+void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
+    {
+        std::ostringstream oss;
+        oss << std::hex << std::setfill('0');
+        for (auto byte : *message) {
+            oss << std::setw(2) << static_cast<int>(byte) << ' ';
+        }
+
+        spdlog::debug(oss.str());
+    }
+
+    if (this->m_buttonCallback) {
+        MidiMessage msg;
+        msg.status = message->at(0);
+        msg.key = message->at(1);
+        msg.velocity = message->at(2);
+        (*m_buttonCallback)(msg);
     }
 }
