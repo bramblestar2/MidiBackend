@@ -6,6 +6,8 @@ project(
     LANGUAGES CXX
 )
 
+set(CMAKE_CXX_STANDARD 20)
+
 find_package(RtMidi CONFIG REQUIRED)
 find_package(RtAudio CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
