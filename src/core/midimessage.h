@@ -3,9 +3,9 @@
 
 
 struct MidiMessage {
-    int status;
-    int key;
-    int velocity;
+    short int status;
+    short int key;
+    short int velocity;
 
     enum Type {
         UNKNOWN = 0x00,

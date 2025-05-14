@@ -3,10 +3,53 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
+#include <mutex>
+#include <regex>
 #include <rtmidi/RtMidi.h>
 #include <iomanip>
 #include <spdlog/spdlog.h>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+
+namespace {
+    std::unordered_map<std::string, int> device_type_count;
+
+    std::mutex ns_mutex;
+
+
+    void AddDeviceCount(std::string name) {
+        std::lock_guard<std::mutex> lock(ns_mutex);
+        
+        if (device_type_count.find(name) == device_type_count.end()) device_type_count[name] = 0;
+
+        device_type_count[name] += 1;
+    }
+
+    void RemoveDeviceCount(std::string name) {
+        std::lock_guard<std::mutex> lock(ns_mutex);
+
+        name = std::regex_replace(name, std::regex(" \\(\\d\\)+$"), "");
+
+        if (device_type_count.find(name) == device_type_count.end()) return;
+
+        if (device_type_count[name] > 0)
+            device_type_count[name]--;
+    }
+
+
+    const std::string GetNameWithCount(std::string name) {
+        if (device_type_count.find(name) == device_type_count.end()) return name;
+
+        return name + " (" + std::to_string(device_type_count.at(name)) + ")";
+    }
+    
+    
+    void ResetDeviceCount() noexcept {
+        device_type_count.clear();
+    }
+}
+
 
 MidiDevice::MidiDevice(const int& inPort, const int& outPort)
     : m_inPort(-1)
@@ -19,6 +62,8 @@ MidiDevice::MidiDevice(const int& inPort, const int& outPort)
 
 MidiDevice::~MidiDevice() {
     this->close();
+
+    RemoveDeviceCount(this->m_name);
 }
 
 
@@ -149,15 +194,28 @@ void MidiDevice::handleIdentityResponse(std::vector<unsigned char> *message) {
 
         if (devOk) {
             this->m_available = Availability::AVAILABLE;
-            spdlog::debug("Device matches: " + deviceName);
+            
+            this->m_name = GetNameWithCount(deviceName);
+            AddDeviceCount(deviceName);
+
+
+            spdlog::debug("Device matches: " + this->m_name);
 
             m_midiIn->cancelCallback();
             m_midiIn->setCallback(MidiDevice::midiCallback, this);
 
+            if (this->m_verifyCallback) {
+                (*m_verifyCallback)();
+            }
+
             break;
         } else {
             this->m_available = Availability::UNAVAILABLE;
-            spdlog::warn(deviceName + ": device code mismatch");
+            
+            this->m_name = GetNameWithCount("Unknown Device");
+            AddDeviceCount("Unknown Device");
+
+            spdlog::warn(this->m_name + ": device code mismatch");
         }
     }
 }
@@ -181,14 +239,26 @@ void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
             oss << std::setw(2) << static_cast<int>(byte) << ' ';
         }
 
-        spdlog::debug(oss.str());
+        spdlog::debug("Device (" + this->m_name + "): " + oss.str());
     }
 
-    if (this->m_buttonCallback) {
+    if (this->m_keyCallback) {
         MidiMessage msg;
         msg.status = message->at(0);
         msg.key = message->at(1);
         msg.velocity = message->at(2);
-        (*m_buttonCallback)(msg);
+        (*m_keyCallback)(msg);
     }
+}
+
+
+void MidiDevice::setKeyCallback(std::function<void(MidiMessage)> callback) {
+    m_keyCallback.reset();
+    m_keyCallback = callback;
+}
+
+
+void MidiDevice::setVerifyCallback(std::function<void()> callback)  {
+    m_verifyCallback.reset();
+    m_verifyCallback = callback;
 }

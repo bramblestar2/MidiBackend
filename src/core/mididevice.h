@@ -8,6 +8,7 @@
 #include <atomic>
 #include <mutex>
 #include <functional>
+#include  <optional>
 
 #include "midimessage.h"
 
@@ -21,6 +22,8 @@ public:
     };
 
 private:
+    std::mutex m_mutex;
+
     std::vector<unsigned char> m_identity;
     std::string m_name;
 
@@ -32,7 +35,8 @@ private:
     int m_inPort;
     int m_outPort;
 
-    std::unique_ptr<std::function<void(MidiMessage message)>> m_buttonCallback;
+    std::optional<std::function<void(MidiMessage)>> m_keyCallback;
+    std::optional<std::function<void()>> m_verifyCallback;
 
     void attemptVerify();
 
@@ -55,7 +59,8 @@ public:
     const std::vector<unsigned char>& identity() const { return m_identity; }
     const std::string& name() const { return m_name; }
 
-    std::mutex m_mutex;
+    void setKeyCallback(std::function<void(MidiMessage)> callback);
+    void setVerifyCallback(std::function<void()> callback);
 };
 
 

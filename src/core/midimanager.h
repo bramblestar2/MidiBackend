@@ -2,11 +2,14 @@
 #include <chrono>
 #include <vector>
 #include <rtmidi/RtMidi.h>
-
-#include "mididevice.h"
-
 #include <memory>
 #include <string> 
+#include <functional>
+#include <optional>
+
+#include "mididevice.h"
+#include "midimessage.h"
+
 
 
 namespace std {
@@ -42,21 +45,27 @@ private:
         MidiManager* manager;
     };
 
-    std::vector<std::pair<int, int>> m_ports;
     std::vector<std::shared_ptr<MidiDevice>> m_devices;
+    
+    RtMidiIn m_midiin;
+    RtMidiOut m_midiout;
+
+    std::optional<std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)>> m_midiCallback;
 
     bool portsMatch(std::string in, std::string out);
-    bool verifyIdentity(unsigned int inPort, unsigned int outPort,
+    void verifyIdentity(unsigned int inPort, unsigned int outPort,
         const std::vector<unsigned char>& targetId);
 
-    RtMidiIn _midiin;
-    RtMidiOut _midiout;
+    void setupDeviceCallbacks();
+
 public:
     MidiManager();
     ~MidiManager();
     
     void refresh();
 
-    std::vector<std::pair<int, int>> getPortPairs() const { return m_ports; }
-    const std::vector<std::shared_ptr<MidiDevice>>& getAvailableDevices() const { return m_devices; }
+    const std::vector<std::shared_ptr<MidiDevice>>& getDevices() const { return m_devices; }
+    const std::vector<std::shared_ptr<MidiDevice>> getAvailableDevices() const;
+
+    void setMidiCallback(std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)> function);
 };

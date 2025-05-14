@@ -15,9 +15,10 @@ find_package(spdlog CONFIG REQUIRED)
 add_executable(MidiTest 
     src/main.cpp
 
-    src/core/midi/mididevice.cpp
-    src/core/midi/midimanager.cpp
-    src/core/midi/midimessage.cpp
+    src/MidiManager.h
+    src/core/mididevice.h src/core/mididevice.cpp
+    src/core/midimanager.h src/core/midimanager.cpp
+    src/core/midimessage.h src/core/midimessage.cpp
 )
 
 target_link_libraries(MidiTest PRIVATE RtMidi::rtmidi RtAudio::rtaudio spdlog::spdlog)
