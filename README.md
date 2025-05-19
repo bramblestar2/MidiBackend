@@ -1,0 +1,3 @@
+# VCPKG
+- rtmidi
+- spdlog
