@@ -24,4 +24,5 @@ add_library(MidiManager
 target_include_directories(MidiManager PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-# target_link_libraries(MidiManager PRIVATE RtMidi::rtmidi spdlog::spdlog)
+
+target_link_libraries(MidiManager PRIVATE RtMidi::rtmidi spdlog::spdlog)
