@@ -71,7 +71,7 @@ void MidiManager::refresh() {
             std::string outPortName = m_midiout.getPortName(j);
 
             if (this->portsMatch(inPortName, outPortName)) {
-                spdlog::debug("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ")");
+                spdlog::debug("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ", " + outPortName + ")");
                 this->verifyIdentity(i, j, {});
             }
         }
