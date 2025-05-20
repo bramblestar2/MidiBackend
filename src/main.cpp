@@ -2,7 +2,7 @@
 #include <rtmidi/RtMidi.h>
 #include <spdlog/spdlog.h>
 
-#include "MidiManager.h"
+#include "Midi/Midi.h"
 
 
 int main() {

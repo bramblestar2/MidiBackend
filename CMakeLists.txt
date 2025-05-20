@@ -15,10 +15,10 @@ find_package(spdlog CONFIG REQUIRED)
 add_library(MidiManager 
     # src/main.cpp
 
-    src/MidiManager.h
-    src/core/mididevice.h src/core/mididevice.cpp
-    src/core/midimanager.h src/core/midimanager.cpp
-    src/core/midimessage.h src/core/midimessage.cpp
+    src/Midi/Midi.h
+    src/Midi/mididevice.h src/Midi/mididevice.cpp
+    src/Midi/midimanager.h src/Midi/midimanager.cpp
+    src/Midi/midimessage.h src/Midi/midimessage.cpp
 )
 
 target_include_directories(MidiManager PUBLIC
