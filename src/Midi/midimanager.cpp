@@ -61,21 +61,27 @@ bool MidiManager::portsMatch(std::string in, std::string out) {
 void MidiManager::refresh() { 
     spdlog::debug("MidiManager: Refreshing Midi Devices");
 
-    int inPortCount = m_midiin.getPortCount();
-    int outPortCount = m_midiout.getPortCount();
+    try {
+        int inPortCount = m_midiin.getPortCount();
+        int outPortCount = m_midiout.getPortCount();
 
-    for (int i = 0; i < inPortCount; i++) {
-        std::string inPortName = m_midiin.getPortName(i);
+        for (int i = 0; i < inPortCount; i++) {
+            std::string inPortName = m_midiin.getPortName(i);
 
-        for (int j = 0; j < outPortCount; j++) {
-            std::string outPortName = m_midiout.getPortName(j);
+            for (int j = 0; j < outPortCount; j++) {
+                std::string outPortName = m_midiout.getPortName(j);
 
-            if (this->portsMatch(inPortName, outPortName)) {
-                spdlog::debug("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ", " + outPortName + ")");
-                this->verifyIdentity(i, j, {});
+                if (this->portsMatch(inPortName, outPortName)) {
+                    spdlog::debug("Ports Match! (" + std::to_string(i) + ", " + std::to_string(j) + ", " + inPortName + ", " + outPortName + ")");
+                    this->verifyIdentity(i, j, {});
+                }
             }
         }
+    } catch (const RtMidiError &error) {
+        spdlog::error("Midi Error: {}", error.getMessage());
+        return;
     }
+
 
     this->setupDeviceCallbacks();
 }
