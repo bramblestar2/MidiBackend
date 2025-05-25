@@ -232,15 +232,15 @@ void MidiDevice::midiCallback(double deltaTime, std::vector<unsigned char> *mess
 
 
 void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
-    {
-        std::ostringstream oss;
-        oss << std::hex << std::setfill('0');
-        for (auto byte : *message) {
-            oss << std::setw(2) << static_cast<int>(byte) << ' ';
-        }
+    // {
+    //     std::ostringstream oss;
+    //     oss << std::hex << std::setfill('0');
+    //     for (auto byte : *message) {
+    //         oss << std::setw(2) << static_cast<int>(byte) << ' ';
+    //     }
 
-        spdlog::debug("Device (" + this->m_name + "): " + oss.str());
-    }
+    //     spdlog::debug("Device (" + this->m_name + "): " + oss.str());
+    // }
 
     if (this->m_keyCallback) {
         MidiMessage msg;
