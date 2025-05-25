@@ -52,6 +52,8 @@ private:
 
     std::optional<std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)>> m_midiCallback;
 
+    std::function<void()> m_devicesRefreshCallback;
+
     bool portsMatch(std::string in, std::string out);
     void verifyIdentity(unsigned int inPort, unsigned int outPort,
         const std::vector<unsigned char>& targetId);
@@ -68,4 +70,5 @@ public:
     const std::vector<std::shared_ptr<MidiDevice>> getAvailableDevices() const;
 
     void setMidiCallback(std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)> function);
+    void setDevicesRefreshCallback(std::function<void()> &&callback);
 };

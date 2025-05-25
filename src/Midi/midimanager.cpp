@@ -60,6 +60,7 @@ bool MidiManager::portsMatch(std::string in, std::string out) {
 
 void MidiManager::refresh() { 
     spdlog::debug("MidiManager: Refreshing Midi Devices");
+    this->m_devices.clear();
 
     try {
         int inPortCount = m_midiin.getPortCount();
@@ -84,6 +85,7 @@ void MidiManager::refresh() {
 
 
     this->setupDeviceCallbacks();
+    this->m_devicesRefreshCallback();
 }
 
 
@@ -115,4 +117,9 @@ void MidiManager::setupDeviceCallbacks() {
 
 void MidiManager::setMidiCallback(std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)> function) {
     this->m_midiCallback = function;
+}
+
+
+void MidiManager::setDevicesRefreshCallback(std::function<void()> &&callback) { 
+    m_devicesRefreshCallback = std::move(callback);
 }
