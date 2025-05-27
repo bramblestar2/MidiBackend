@@ -34,6 +34,21 @@ void MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
     try {
         std::shared_ptr<MidiDevice> device = std::make_shared<MidiDevice>(inPort, outPort);
 
+        // Makes sure callback is called only when all devices have finished verifying
+        device->setVerifyCallback([this] () {
+            bool all_finished = true;
+            for (auto &d : m_devices) {
+                if (d->is_available() == MidiDevice::Availability::VERIFYING) {
+                    all_finished = false;
+                    break;
+                }
+            }
+
+            if (all_finished) {
+                this->m_devicesRefreshCallback();
+            }
+        });
+
         m_devices.push_back(device);
     } catch (RtMidiError &error) {
         error.printMessage();
@@ -85,20 +100,31 @@ void MidiManager::refresh() {
 
 
     this->setupDeviceCallbacks();
-    this->m_devicesRefreshCallback();
 }
 
 
-const std::vector<std::shared_ptr<MidiDevice>> MidiManager::getAvailableDevices() const {
-    std::vector<std::shared_ptr<MidiDevice>> devices;
-    devices.reserve(m_devices.size());
-
-    std::copy_if(m_devices.begin(), m_devices.end(), std::back_inserter(devices),  
+std::vector<MidiDevice*> MidiManager::getDevices() const {
+    std::vector<MidiDevice*> result;
+    result.reserve(m_devices.size());
+    std::transform(m_devices.begin(), m_devices.end(), std::back_inserter(result), 
     [](std::shared_ptr<MidiDevice> a) {
-        return a->is_available() == MidiDevice::AVAILABLE;
+        return a.get();
     });
     
-    return devices;
+    return result;
+}
+
+
+std::vector<MidiDevice*> MidiManager::getAvailableDevices() const {
+    std::vector<MidiDevice*> result;
+    
+    for (auto &device : m_devices) {
+        if (device->is_available()) {
+            result.push_back(device.get());
+        }
+    }
+    
+    return result;
 }
 
 
@@ -108,14 +134,14 @@ void MidiManager::setupDeviceCallbacks() {
 
         device->setKeyCallback([&device, this](MidiMessage msg) {
             if (m_midiCallback) {
-                (*this->m_midiCallback)(device, msg);
+                (*this->m_midiCallback)(device.get(), msg);
             }
         });
     }
 }
 
 
-void MidiManager::setMidiCallback(std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)> function) {
+void MidiManager::setMidiCallback(std::function<void(MidiDevice*, MidiMessage)> function) {
     this->m_midiCallback = function;
 }
 

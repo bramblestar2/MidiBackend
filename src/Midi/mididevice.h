@@ -57,7 +57,7 @@ public:
     void close();
     const Availability is_available() const noexcept { return m_available; }
     const std::vector<unsigned char>& identity() const { return m_identity; }
-    const std::string& name() const { return m_name; }
+    const std::string& name() const;
 
     void setKeyCallback(std::function<void(MidiMessage)> callback);
     void setVerifyCallback(std::function<void()> callback);

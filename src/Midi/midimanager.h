@@ -50,7 +50,7 @@ private:
     RtMidiIn m_midiin;
     RtMidiOut m_midiout;
 
-    std::optional<std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)>> m_midiCallback;
+    std::optional<std::function<void(MidiDevice*, MidiMessage)>> m_midiCallback;
 
     std::function<void()> m_devicesRefreshCallback;
 
@@ -66,9 +66,9 @@ public:
     
     void refresh();
 
-    const std::vector<std::shared_ptr<MidiDevice>>& getDevices() const { return m_devices; }
-    const std::vector<std::shared_ptr<MidiDevice>> getAvailableDevices() const;
+    std::vector<MidiDevice*> getDevices() const;
+    std::vector<MidiDevice*> getAvailableDevices() const;
 
-    void setMidiCallback(std::function<void(std::shared_ptr<MidiDevice>, MidiMessage)> function);
+    void setMidiCallback(std::function<void(MidiDevice*, MidiMessage)> function);
     void setDevicesRefreshCallback(std::function<void()> &&callback);
 };

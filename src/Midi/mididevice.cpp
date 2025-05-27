@@ -35,6 +35,9 @@ namespace {
 
         if (device_type_count[name] > 0)
             device_type_count[name]--;
+
+        if (device_type_count[name] == 0)
+            device_type_count.erase(name);
     }
 
 
@@ -119,13 +122,17 @@ void MidiDevice::close() {
 
 
 void MidiDevice::identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData) {
+    
     auto device = static_cast<MidiDevice*>(userData);
+
+    if (message->size() == 3) return;
 
     if (message->size() < 6 ||
         (*message)[0] != 0xF0 ||
         (*message)[1] != 0x7E ||
         (*message)[3] != 0x06 ||
         (*message)[4] != 0x02) {
+        std::lock_guard<std::mutex> lock(device->m_mutex);
         device->m_available = Availability::UNAVAILABLE;
         return;
     }
@@ -193,11 +200,12 @@ void MidiDevice::handleIdentityResponse(std::vector<unsigned char> *message) {
         );
 
         if (devOk) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+
             this->m_available = Availability::AVAILABLE;
             
             this->m_name = GetNameWithCount(deviceName);
             AddDeviceCount(deviceName);
-
 
             spdlog::debug("Device matches: " + this->m_name);
 
@@ -209,13 +217,6 @@ void MidiDevice::handleIdentityResponse(std::vector<unsigned char> *message) {
             }
 
             break;
-        } else {
-            this->m_available = Availability::UNAVAILABLE;
-            
-            this->m_name = GetNameWithCount("Unknown Device");
-            AddDeviceCount("Unknown Device");
-
-            spdlog::warn(this->m_name + ": device code mismatch");
         }
     }
 }
@@ -232,16 +233,6 @@ void MidiDevice::midiCallback(double deltaTime, std::vector<unsigned char> *mess
 
 
 void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
-    // {
-    //     std::ostringstream oss;
-    //     oss << std::hex << std::setfill('0');
-    //     for (auto byte : *message) {
-    //         oss << std::setw(2) << static_cast<int>(byte) << ' ';
-    //     }
-
-    //     spdlog::debug("Device (" + this->m_name + "): " + oss.str());
-    // }
-
     if (this->m_keyCallback) {
         MidiMessage msg;
         msg.status = message->at(0);
@@ -249,6 +240,11 @@ void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
         msg.velocity = message->at(2);
         (*m_keyCallback)(msg);
     }
+}
+
+
+const std::string& MidiDevice::name() const {
+    return this->m_name;
 }
 
 
