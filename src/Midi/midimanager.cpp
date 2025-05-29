@@ -62,8 +62,8 @@ bool MidiManager::portsMatch(std::string in, std::string out) {
     std::transform(out.begin(), out.end(), out.begin(), ::toupper);
     
     //Remove index number at the end
-    in = std::regex_replace(in, std::regex("\\d+$"), "");
-    out = std::regex_replace(out, std::regex("\\d+$"), "");
+    // in = std::regex_replace(in, std::regex("\\d+$"), "");
+    // out = std::regex_replace(out, std::regex("\\d+$"), "");
 
     // Remove IN AND OUT from the names
     in = std::regex_replace(in, std::regex("IN"), "");
