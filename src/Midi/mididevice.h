@@ -35,8 +35,8 @@ private:
     int m_inPort;
     int m_outPort;
 
-    std::optional<std::function<void(MidiMessage)>> m_keyCallback;
-    std::optional<std::function<void()>> m_verifyCallback;
+    std::function<void(MidiMessage)> m_keyCallback;
+    std::function<void()> m_verifyCallback;
 
     void attemptVerify();
 

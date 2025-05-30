@@ -213,7 +213,7 @@ void MidiDevice::handleIdentityResponse(std::vector<unsigned char> *message) {
             m_midiIn->setCallback(MidiDevice::midiCallback, this);
 
             if (this->m_verifyCallback) {
-                (*m_verifyCallback)();
+                m_verifyCallback();
             }
 
             break;
@@ -238,7 +238,8 @@ void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
         msg.status = message->at(0);
         msg.key = message->at(1);
         msg.velocity = message->at(2);
-        (*m_keyCallback)(msg);
+
+        m_keyCallback(msg);
     }
 }
 
@@ -249,12 +250,10 @@ const std::string& MidiDevice::name() const {
 
 
 void MidiDevice::setKeyCallback(std::function<void(MidiMessage)> callback) {
-    m_keyCallback.reset();
     m_keyCallback = callback;
 }
 
 
 void MidiDevice::setVerifyCallback(std::function<void()> callback)  {
-    m_verifyCallback.reset();
     m_verifyCallback = callback;
 }

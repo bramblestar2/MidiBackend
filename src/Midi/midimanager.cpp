@@ -44,7 +44,7 @@ void MidiManager::verifyIdentity(unsigned int inPort, unsigned int outPort,
                 }
             }
 
-            if (all_finished) {
+            if (all_finished && this->m_devicesRefreshCallback) {
                 this->m_devicesRefreshCallback();
             }
         });
@@ -133,9 +133,11 @@ void MidiManager::setupDeviceCallbacks() {
         auto &device = m_devices.at(i);
 
         device->setKeyCallback([&device, this](MidiMessage msg) {
+
             if (m_midiCallback) {
-                (*this->m_midiCallback)(device.get(), msg);
+                this->m_midiCallback(device.get(), msg);
             }
+
         });
     }
 }

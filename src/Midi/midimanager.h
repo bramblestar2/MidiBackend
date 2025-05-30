@@ -50,7 +50,7 @@ private:
     RtMidiIn m_midiin;
     RtMidiOut m_midiout;
 
-    std::optional<std::function<void(MidiDevice*, MidiMessage)>> m_midiCallback;
+    std::function<void(MidiDevice*, MidiMessage)> m_midiCallback;
 
     std::function<void()> m_devicesRefreshCallback;
 
