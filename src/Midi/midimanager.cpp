@@ -69,6 +69,19 @@ bool MidiManager::portsMatch(std::string in, std::string out) {
     in = std::regex_replace(in, std::regex("IN"), "");
     out = std::regex_replace(out, std::regex("OUT"), "");
 
+    // TODO: This is a temporary fix to windows midi matching
+    // a possible issue im thinking of thatll happen is of multiple devices sharing the same name being plugged in
+
+
+#ifdef _WIN32
+    in = std::regex_replace(in, std::regex("\\d$"), "");
+    out = std::regex_replace(out, std::regex("\\d$"), "");
+#endif
+
+    
+
+    // std::cout << "Device Match: " << in << " - " << out << "\n";
+
     return in == out;
 }
 
