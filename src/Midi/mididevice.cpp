@@ -241,6 +241,11 @@ void MidiDevice::handleButtonResponse(double time, std::vector<unsigned char> *m
         msg.timestamp = time;
 
         m_keyCallback(msg);
+
+        if (m_isRecording) {
+            std::lock_guard<std::mutex> lock(m_recordingMutex);
+            m_recording.push_back(msg);
+        }
     }
 }
 
@@ -257,4 +262,16 @@ void MidiDevice::setKeyCallback(std::function<void(MidiMessage)> callback) {
 
 void MidiDevice::setVerifyCallback(std::function<void()> callback)  {
     m_verifyCallback = callback;
+}
+
+
+void MidiDevice::startRecording()
+{
+    m_recording.clear();
+    m_isRecording = true;
+}
+
+void MidiDevice::stopRecording()
+{
+    m_isRecording = false;
 }

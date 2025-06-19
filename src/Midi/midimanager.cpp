@@ -164,3 +164,27 @@ void MidiManager::setMidiCallback(std::function<void(MidiDevice*, MidiMessage)> 
 void MidiManager::setDevicesRefreshCallback(std::function<void()> &&callback) { 
     m_devicesRefreshCallback = std::move(callback);
 }
+
+void MidiManager::startRecording() {
+    for (auto &device : this->getAvailableDevices()) {
+        device->startRecording();
+    }
+}
+
+void MidiManager::stopRecording() {
+    for (auto &device : this->getAvailableDevices()) {
+        device->stopRecording();
+    }
+}
+
+std::vector<std::pair<std::string, std::vector<MidiMessage>>> MidiManager::getRecordings() const
+{
+    std::vector<std::pair<std::string, std::vector<MidiMessage>>> result;
+    for (auto &device : m_devices) {
+        const auto& recordings = device->getRecording();
+        if (recordings.empty()) continue;
+        
+        result.push_back(std::make_pair(device->name(), recordings));
+    }
+    return result;
+}

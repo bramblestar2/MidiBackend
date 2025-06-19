@@ -21,7 +21,15 @@ int main() {
         return 1;
     }
 
+    midiManager.startRecording();
+
     std::cin.get();
+
+    midiManager.stopRecording();
+
+    for (auto &[name, recording] : midiManager.getRecordings()) {
+        std::cout << name << " : " << recording.size() << "\n";
+    }
 
     return 0;
 }

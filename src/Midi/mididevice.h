@@ -8,7 +8,7 @@
 #include <atomic>
 #include <mutex>
 #include <functional>
-#include  <optional>
+#include <optional>
 
 #include "midimessage.h"
 
@@ -34,6 +34,10 @@ private:
 
     int m_inPort;
     int m_outPort;
+
+    std::mutex m_recordingMutex;
+    bool m_isRecording = false;
+    std::vector<MidiMessage> m_recording;
 
     std::function<void(MidiMessage)> m_keyCallback;
     std::function<void()> m_verifyCallback;
@@ -61,6 +65,11 @@ public:
 
     void setKeyCallback(std::function<void(MidiMessage)> callback);
     void setVerifyCallback(std::function<void()> callback);
+
+    void startRecording();
+    void stopRecording();
+
+    const std::vector<MidiMessage>& getRecording() const { return m_recording; }
 };
 
 

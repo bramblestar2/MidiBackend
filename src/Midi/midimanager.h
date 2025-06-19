@@ -6,6 +6,7 @@
 #include <string> 
 #include <functional>
 #include <optional>
+#include <map>
 
 #include "mididevice.h"
 #include "midimessage.h"
@@ -71,4 +72,8 @@ public:
 
     void setMidiCallback(std::function<void(MidiDevice*, MidiMessage)> function);
     void setDevicesRefreshCallback(std::function<void()> &&callback);
+
+    void startRecording();
+    void stopRecording();
+    std::vector<std::pair<std::string, std::vector<MidiMessage>>> getRecordings() const;
 };
