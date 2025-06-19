@@ -9,7 +9,7 @@ int main() {
     spdlog::set_level(spdlog::level::debug);
 
     MidiManager midiManager;
-    midiManager.setMidiCallback([](std::shared_ptr<MidiDevice> device, MidiMessage msg) {
+    midiManager.setMidiCallback([](MidiDevice* device, MidiMessage msg) {
         std::cout << device->name() << " : CALLED\n";
     });
 

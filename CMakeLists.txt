@@ -26,3 +26,7 @@ target_include_directories(MidiManager PUBLIC
 )
 
 target_link_libraries(MidiManager PRIVATE RtMidi::rtmidi spdlog::spdlog)
+
+
+add_executable(test src/main.cpp)
+target_link_libraries(test PRIVATE MidiManager RtMidi::rtmidi spdlog::spdlog)

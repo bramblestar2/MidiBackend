@@ -43,7 +43,7 @@ private:
     static void identityCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
     static void midiCallback(double deltaTime, std::vector<unsigned char> *message, void *userData);
     void handleIdentityResponse(std::vector<unsigned char> *message);
-    void handleButtonResponse(std::vector<unsigned char> *message);
+    void handleButtonResponse(double time, std::vector<unsigned char> *message);
 
 public:
     // Upon creation of midi device, it will attempt to verify the 

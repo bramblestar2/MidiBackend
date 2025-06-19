@@ -87,7 +87,7 @@ void MidiDevice::open(const int& inPort, const int& outPort) {
 
         m_midiIn->setCallback(MidiDevice::identityCallback, this);
 
-        m_midiIn->ignoreTypes(false, true, true);
+        m_midiIn->ignoreTypes(false, false, true);
 
         m_midiIn->openPort(inPort);
         m_midiOut->openPort(outPort);
@@ -228,16 +228,17 @@ void MidiDevice::midiCallback(double deltaTime, std::vector<unsigned char> *mess
     }
 
     auto device = static_cast<MidiDevice*>(userData);
-    device->handleButtonResponse(message);
+    device->handleButtonResponse(deltaTime, message);
 }
 
 
-void MidiDevice::handleButtonResponse(std::vector<unsigned char> *message) {
+void MidiDevice::handleButtonResponse(double time, std::vector<unsigned char> *message) {
     if (this->m_keyCallback) {
         MidiMessage msg;
         msg.status = message->at(0);
         msg.key = message->at(1);
         msg.velocity = message->at(2);
+        msg.timestamp = time;
 
         m_keyCallback(msg);
     }
